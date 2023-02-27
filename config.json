@@ -1,0 +1,33 @@
+{
+    "bids_root": "../",
+
+    "practice_video_id": "ID124_vid1",
+    "eat_sample_rate_hz": 2,
+
+    "global_bids_metadata": {
+        "InstitutionName": "Northwestern University",
+        "InstitutionDepartmentName": "Department of Psychology"
+    },
+
+    "palette": {
+        "fiction": "red",
+        "nonfiction": "blue",
+        "motivation": "gold"
+    },
+
+    "SetA_video_ids": [
+        "ID113_vid3",
+        "ID130_vid6",
+        "ID168_vid1",
+        "ID174_vid3",
+        "ID181_vid2"
+    ],
+
+    "SetB_video_ids": [
+        "ID116_vid6",
+        "ID118_vid5",
+        "ID128_vid2",
+        "ID131_vid1",
+        "ID165_vid4"
+    ]
+}
