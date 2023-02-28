@@ -9,6 +9,9 @@ bids_root = config["bids_root"]
 phenotype_dir = bids_root / "phenotype"
 phenotype_dir.mkdir(exist_ok=True)
 
+export_path = phenotype_dir / "survey.tsv"
+
+
 filepaths = bids_root.joinpath("sourcedata").glob("*.sav")
 fp = next(filepaths)
 assert not list(filepaths), "There should only be 1 .sav file in `sourcedata`."
@@ -58,3 +61,100 @@ df["Age"] = df["Age"].astype(int)
 df = df.query("Age >= 18")
 
 
+df = df.rename(columns={
+        "Q118": "participant_id",
+        "Q1_1": "ArousalPre",
+        "Q2_1": "PleasurePre",
+        "Q14_1": "ArousalPost",
+        "Q15_1": "PleasurePost",
+        "Q37": "Letter1",
+        "Q42": "Letter2",
+    }
+)
+
+
+df = df[df["participant_id"].str.len().gt(0)]
+df["participant_id"] = df["participant_id"].astype(int)
+participants = utils.load_participant_file().index.tolist()
+df = df[df["participant_id"].isin(participants)]
+df = df.set_index("participant_id")
+
+
+################################################################################
+# SEPARATE QUESTIONNAIRES
+################################################################################
+
+# Demographic stuff
+demographic_columns = [
+    "Age",
+    "Gender",
+
+    # # Consolidate these
+    # "Race1_1", "Race1_2", "Race1_3", "Race1_4", "Race1_5", "Race1_6", "Race1_7",
+    # "Race2",
+
+    # "IRI", "MWQ", "ART",
+    
+    "DRF", "DreamEmoTone", "DreamEmoIntensity",
+    "NMRF", "NMD", "LDRF", "DreamSharing", "DreamReceiving",
+    "Condition",
+    # # Consolidate these
+    # "Strategy_pre_1",
+    # "Strategy_pre_2",
+    # "Strategy_pre_3",
+    # "Strategy_pre_4",
+    # "Strategy_post_1",
+    # "Strategy_post_2",
+    # "Strategy_post_3",
+    # "Strategy_post_4",
+]
+
+# "Letter1",
+# "Letter2",
+# "NFictionRecallInstr",
+# "FictionRecallInstr",
+# "Suspicion",
+
+timing_columns = [c for c in df if "Timer" in c]
+timing = df[timing_columns].copy()
+df = df.drop(columns=timing_columns)
+
+demogr = df[demographic_columns].copy()
+demogr.to_csv(export_path, index=True, na_rep="n/a", sep="\t")
+
+
+# meta.variable_value_labels
+
+
+################################################################################
+# SCORING QUESTIONNAIRES
+################################################################################
+
+# Score Mind Wandering Questionnaire
+columns = [f"MWQ_{i + 1}" for i in range(5)]
+df["MWQ"] = df[columns].sum(axis=1)
+df = df.drop(columns=columns)
+
+# Score IRI
+columns = [f"IRI_{i + 1}" for i in range(28)]
+df["IRI"] = df[columns].sum(axis=1)
+df = df.drop(columns=columns)
+
+# Score Author Recognition Test
+columns = [f"AuthorRecog_{i + 1}" for i in range(65)]
+df["ART"] = df[columns].fillna(0).sum(axis=1)
+df = df.drop(columns=columns)
+
+# Score State Empathy Scale both pre and post.
+columns = [f"SES_pre_{i + 1}" for i in range(12)]
+df["pre.SES"] = df[columns].sum(axis=1)
+df = df.drop(columns=columns)
+
+columns = [f"SES_post_{i + 1}" for i in range(12)]
+df["post.SES"] = df[columns].sum(axis=1)
+df = df.drop(columns=columns)
+
+
+
+# Export
+df.to_csv(export_path, index=True, na_rep="n/a", sep="\t")
