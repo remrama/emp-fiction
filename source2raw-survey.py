@@ -72,6 +72,12 @@ df = df.rename(columns={
     }
 )
 
+# Rename some participant IDs that were entered wrong in survey
+df["participant_id"] = df["participant_id"].replace({
+    "3127": "17",
+    "3314": "26",
+    "3309": "27",
+})
 
 df = df[df["participant_id"].str.len().gt(0)]
 df["participant_id"] = df["participant_id"].astype(int)

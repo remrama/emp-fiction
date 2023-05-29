@@ -1,9 +1,17 @@
 """Helper functions."""
 import json
 from pathlib import Path
+import subprocess
+import sys
 
 import pandas as pd
 
+
+def run_command(command):
+    """Run shell command and exit upon failure."""
+    result = subprocess.run(command, shell=True)
+    if result.returncode != 0:
+        sys.exit()
 
 def load_config():
     with open("./config.json", "r", encoding="utf-8") as jsonfile:
@@ -15,6 +23,12 @@ def load_participant_file():
     config = load_config()
     path = config["bids_root"] / "participants.tsv"
     return pd.read_csv(path, sep="\t", index_col="participant_id")
+
+def export_table(df, filepath, mkdir=True, **kwargs):
+    kwargs = {"sep": "\t", "na_rep": "n/a"} | kwargs
+    if mkdir:
+        Path(filepath).parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(filepath, **kwargs)
 
 def export_sidecar(obj, filepath):
     json_filepath = Path(filepath).with_suffix(".json")
@@ -104,9 +118,9 @@ def get_true_timecourses(video_id):
 
     with open("db_pword.txt", "rb") as f:
         db_pword = f.read()
-    ratings_zip_path = "../stimuli/SENDv1_featuresRatings_pw.zip"
-    actor_id = video_id[2:5] # the actor ID
-    actor_nid = video_id[-1] # specifies which of N videos from this actor
+    ratings_zip_path = load_config()["bids_root"] / "stimuli" / "SENDv1_featuresRatings_pw.zip"
+    actor_id = video_id[2:5]  # the actor ID
+    actor_nid = video_id[-1]  # specifies which of N videos from this actor
     path_basename = f"target_{actor_id}_{actor_nid}_normal.csv"
     # Roam through the train/test/valid files to see where this actor's ratings are located.
     with zipfile.ZipFile(ratings_zip_path, "r") as z:
